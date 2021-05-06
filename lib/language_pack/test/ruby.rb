@@ -5,13 +5,16 @@ class LanguagePack::Ruby
       new_app?
       Dir.chdir(build_path)
       remove_vendor_bundle
-      install_ruby
+      warn_bad_binstubs
+      install_ruby(slug_vendor_ruby, build_ruby_path)
       install_jvm
-      setup_language_pack_environment
-      setup_profiled
+      setup_language_pack_environment(ruby_layer_path: File.expand_path("."), gem_layer_path: File.expand_path("."))
+      setup_export
+      setup_profiled(ruby_layer_path: "$HOME", gem_layer_path: "$HOME") # $HOME is set to /app at run time
       allow_git do
-        install_bundler_in_app
-        build_bundler("development")
+        install_bundler_in_app(slug_vendor_base)
+        load_bundler_cache
+        build_bundler(bundle_path: "vendor/bundle", default_bundle_without: "development")
         post_bundler
         create_database_yml
         install_binaries
@@ -22,21 +25,21 @@ class LanguagePack::Ruby
   end
 
   private
+  def db_prepare_test_rake_tasks
+    ["db:schema:load", "db:migrate"].map {|name| rake.task(name) }
+  end
+
   def prepare_tests
-    schema_load = rake.task("db:schema:load")
-    db_migrate  = rake.task("db:migrate")
-    return true unless (schema_load.is_defined? || db_migrate.is_defined?)
+    rake_tasks = db_prepare_test_rake_tasks.select(&:is_defined?)
+    return true if rake_tasks.empty?
 
-    topic "Preparing test database schema"
-
-    [schema_load, db_migrate].each do |rake_task|
-      if rake_task.is_defined?
-        rake_task.invoke(env: rake_env)
-        if rake_task.success?
-          puts "#{rake_task.task} completed (#{"%.2f" % rake_task.time}s)"
-        else
-          error "Could not load test database schema"
-        end
+    topic "Preparing test database"
+    rake_tasks.each do |rake_task|
+      rake_task.invoke(env: rake_env)
+      if rake_task.success?
+        puts "#{rake_task.task} completed (#{"%.2f" % rake_task.time}s)"
+      else
+        error "Could not prepare database for test"
       end
     end
   end
