@@ -980,7 +980,7 @@ https://devcenter.heroku.com/articles/ruby-versions#your-ruby-version-is-x-but-y
       if $?.success?
         topic "Using Node.js version: #{NODE_JS_VERSION}"
       else
-        error "Can't install nodejs-#{NODE_JS_VERSION}"
+        error "Can't install node-v#{NODE_JS_VERSION}"
       end
       Dir["bin/*"].each {|path| run("chmod +x #{path}") }
     end
