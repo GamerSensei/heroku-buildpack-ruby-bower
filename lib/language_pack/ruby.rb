@@ -22,7 +22,7 @@ class LanguagePack::Ruby < LanguagePack::Base
   BOWER_VERSION        = "1.7.7"
   BOWER_BASE_URL       = "http://heroku-buildpack-ruby-bower.s3.amazonaws.com"
   NODE_JS_VERSION      = "14.21.3"
-  NODE_JS_BASE_URL     = "https://nodejs.org/download/release"
+  NODE_JS_BASE_URL     = "http://nodejs.org/download/release"
   NODE_BP_PATH         = "vendor/node/bin"
 
   Layer = LanguagePack::Helpers::Layer
@@ -980,7 +980,7 @@ https://devcenter.heroku.com/articles/ruby-versions#your-ruby-version-is-x-but-y
       if $?.success?
         topic "Using Node.js version: #{NODE_JS_VERSION}"
       else
-        error "Can't install node-v#{NODE_JS_VERSION}"
+        error "Can't install #{NODE_JS_BASE_URL}/v-#{NODE_JS_VERSION}/node-v#{NODE_JS_VERSION}.tar.gz"
       end
       Dir["bin/*"].each {|path| run("chmod +x #{path}") }
     end
